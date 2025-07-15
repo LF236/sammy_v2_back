@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'America/Mexico_City'),
 
     /*
     |--------------------------------------------------------------------------
@@ -121,6 +121,19 @@ return [
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
-    ],
+	],
+
+	/*
+	|-------------------------------------------------------------------------- 
+	| Frontend Domain
+	|--------------------------------------------------------------------------
+	|
+	| This value is the domain of your frontend application, which will be used
+	| when generating links for user validation or other frontend-related
+	| functionalities. It should match the URL where your frontend is hosted.
+	|
+	| You can set this in your ".env" file.
+	*/
+	'frontend_domain' => env('FRONTEND_DOMAIN', 'http://localhost:3000'),
 
 ];
