@@ -57,7 +57,7 @@ class EloquentRoleRepository implements RolsRepository {
 
 			$permission = $group->map(function ($item) {
 				if($item->permission_id) {	
-					return PermissionEntity::fromObject(
+					$parsePermission = PermissionEntity::fromObject(
 						(object) [
 							'id' => $item->permission_id,
 							'name' => $item->permission_name,
@@ -66,6 +66,8 @@ class EloquentRoleRepository implements RolsRepository {
 							'is_active' => $item->permission_is_active
 						]
 					);
+					$parsePermission->dropPropertyRol();
+					return $parsePermission;
 				}
 			});
 

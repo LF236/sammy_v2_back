@@ -10,7 +10,7 @@ class PermissionEntity {
 		public? string $description,
 		public? bool $is_active,
 		public ?string $key = null,
-		public ?string $roles = ''
+		public ?array $roles = []
 	) {}
 
 
@@ -37,5 +37,9 @@ class PermissionEntity {
 
 	public function getId(): string {
 		return $this->id;
+	}
+
+	public function dropPropertyRol(): void {
+		unset($this->roles);
 	}
 }

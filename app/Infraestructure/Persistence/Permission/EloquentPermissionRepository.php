@@ -32,19 +32,19 @@ class EloquentPermissionRepository implements PermissionRepository {
 			'permissions.description as description',
 			'permissions.is_active as is_active',
 			'permissions.key as key',
-			DB::raw('GROUP_CONCAT(r.name) as roles'),
+			DB::raw('JSON_ARRAYAGG(JSON_OBJECT("id", r.id, "name", r.name, "description", r.description, "is_active", r.is_active, "key", r.key)) as roles'),
 		]);
 
 		$query = $query->groupBy('permissions.id', 'permissions.name', 'permissions.description', 'permissions.is_active', 'permissions.key');
 
 
 		$permissions = $query->get();
-
 		if ($permissions->isEmpty()) {
 			return [];
 		}
 
 		return $permissions->map(function ($permission) {
+			$permission->roles = json_decode($permission->roles, true) ?? [];
 			return PermissionEntity::fromObject($permission);
 		})->toArray();
 	}
