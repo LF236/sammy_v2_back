@@ -41,6 +41,7 @@ class CreateAdminUser extends Command
 			'name' => 'required|string|max:255|min:3|unique:users,name',
 			'email' => 'required|email|max:255|unique:users,email',
 			'password' => 'required|string|min:8',
+			'confirm_password' => 'required|string|same:password|min:8',
 		];
 	}
 
@@ -49,11 +50,13 @@ class CreateAdminUser extends Command
 		$name = $this->ask('User Name for the Super Admin User');
 		$email = $this->ask('Enter the email for the Super Admin User');
 		$password = $this->secret('Enter the password for the Super Admin User');
+		$confirmPassword = $this->secret('Confirm the password for the Super Admin User');
 
 		$validator = Validator::make([
 			'name' => $name,
 			'email' => $email,
 			'password' => $password,
+			'confirm_password' => $confirmPassword
 		], $this->rules());	
 
 		if($validator->fails()) {
