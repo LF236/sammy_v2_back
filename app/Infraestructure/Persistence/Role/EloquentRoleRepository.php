@@ -137,7 +137,13 @@ class EloquentRoleRepository implements RolsRepository {
 			}
 			return $role;
 		})->values();
-		return $aux->first() ? $aux->first() : null;
+
+		$first = $aux->first();
+		if(!$first) {
+			return null;
+		}
+
+		return $first;
 	}
 
 	public function create(CreateRolDto $data) : ?RolEntity {

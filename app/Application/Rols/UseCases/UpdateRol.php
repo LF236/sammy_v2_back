@@ -24,7 +24,7 @@ class UpdateRol {
 
 	public function handle(string $id, UpdateRolDto $dto) {
 		$rol = $this->rolRepository->findById($id);
-
+	
 		if (!$rol) {
 			throw new BadRequestHttpException('Rol not found');
 		}
@@ -36,6 +36,7 @@ class UpdateRol {
 				$ids_not_found = array_diff($dto->permissions, array_map(function($permission) {
 					return $permission->id;
 				}, $permissions));
+					
 				throw new BadRequestHttpException(
 					'Permissions not found: ' . implode(', ', $ids_not_found)
 				);
