@@ -23,8 +23,8 @@ class EloquentPermissionRepository implements PermissionRepository {
 		$query->limit($pagination->limit)
 			->offset($pagination->offset);
 		
-		$query = $query->join('role_permission as rp', 'rp.permission_id', '=', 'permissions.id')
-				 ->join('roles as r', 'r.id', '=', 'rp.role_id');
+		$query = $query->leftJoin('role_permission as rp', 'rp.permission_id', '=', 'permissions.id')
+				 ->leftJoin('roles as r', 'r.id', '=', 'rp.role_id');
 
 		$query->select([
 			'permissions.id as id',
@@ -37,14 +37,22 @@ class EloquentPermissionRepository implements PermissionRepository {
 
 		$query = $query->groupBy('permissions.id', 'permissions.name', 'permissions.description', 'permissions.is_active', 'permissions.key');
 
-
 		$permissions = $query->get();
+
 		if ($permissions->isEmpty()) {
 			return [];
 		}
 
 		return $permissions->map(function ($permission) {
-			$permission->roles = json_decode($permission->roles, true) ?? [];
+			$roles = json_decode($permission->roles, true) ?? [];
+			$firsRole = $roles[0] ?? null;
+
+			if($firsRole && isset($firsRole['id'])) {
+				$permission->roles = $roles;
+			} else {
+				$permission->roles = [];
+			}
+			
 			return PermissionEntity::fromObject($permission);
 		})->toArray();
 	}

@@ -18,13 +18,9 @@ use Illuminate\Routing\Controller;
 
 class PermissionController extends Controller {
 	public function get(GetPermissionRequest $request, GetPermission $useCase) {
-		$dto = new PaginationDto(
-			$request->input('offset'),
-			$request->input('limit'),
-		);
+		$dto = $request->toPaginationDto();
 
-		$dtoSearch = new SearchDto($request->input('search'));
-
+		$dtoSearch = $request->toSearchDto();
 		$permissions = $useCase->handle($dto, $dtoSearch);
 			
 

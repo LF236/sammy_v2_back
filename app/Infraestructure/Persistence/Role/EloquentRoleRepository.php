@@ -8,6 +8,7 @@ use App\Application\Rols\DTOs\UpdateRolDto;
 use App\Domain\Permission\Entities\PermissionEntity;
 use App\Domain\Rols\Entities\RolEntity;
 use App\Domain\Rols\Repositories\RolsRepository;
+use Illuminate\Support\Facades\DB;
 
 class EloquentRoleRepository implements RolsRepository {
 
@@ -18,34 +19,35 @@ class EloquentRoleRepository implements RolsRepository {
 				->orWhereRaw('LOWER(roles.description) LIKE ?', ['%' . strtolower($searchDto->search) . '%']);
 		}
 
-		$query->limit($paginationDto->limit)
-			->offset($paginationDto->offset);
+		$rolesIds = $query->select('id')
+			->limit($paginationDto->limit)
+			->offset($paginationDto->offset)
+			->pluck('id');
 
 
-		$query->leftJoin('role_permission as rp', 'rp.role_id', '=', 'id');
-		$query->leftJoin('permissions as p', 'p.id', '=', 'rp.permission_id');
-
-		$query->select(
-			'roles.id as id',
-			'roles.name as name',
-			'roles.key as key',
-			'roles.description as description',
-			'roles.is_active as is_active',
-			'p.id as permission_id',
-			'p.name as permission_name',
-			'p.key as permission_key',
-			'p.description as permission_description',
-			'p.is_active as permission_is_active'
-		);
-
-
-		$roles = $query->get();
-
-		if($roles->isEmpty()) {
+		$permissionsQuery = DB::table('roles')
+			->leftJoin('role_permission as rp', 'rp.role_id', '=', 'roles.id')
+			->leftJoin('permissions as p', 'p.id', '=', 'rp.permission_id')
+			->whereIn('roles.id', $rolesIds)
+			->select(
+				'roles.id as id',
+				'roles.name as name',
+				'roles.key as key',
+				'roles.description as description',
+				'roles.is_active as is_active',
+				'p.id as permission_id',
+				'p.name as permission_name',
+				'p.key as permission_key',
+				'p.description as permission_description',
+				'p.is_active as permission_is_active'
+			)
+			->get();
+	
+		if($rolesIds->isEmpty()) {
 			return [];
 		}
 		
-		$aux = collect($roles)->groupBy('id')->map(function ($group) {
+		$aux = collect($permissionsQuery)->groupBy('id')->map(function ($group) {
 			$firstRole = $group->first();
 			$role = RolEntity::fromObj([
 				'id' => $firstRole->id,
@@ -56,7 +58,7 @@ class EloquentRoleRepository implements RolsRepository {
 			]);
 
 			$permission = $group->map(function ($item) {
-				if($item->permission_id) {	
+				if($item->permission_id && $item->permission_id !== null) {	
 					$parsePermission = PermissionEntity::fromObject(
 						(object) [
 							'id' => $item->permission_id,
@@ -69,7 +71,7 @@ class EloquentRoleRepository implements RolsRepository {
 					$parsePermission->dropPropertyRol();
 					return $parsePermission;
 				}
-			});
+			})->filter();
 
 			if(count($permission) === 0) {
 				$role->setPermissions([]);
