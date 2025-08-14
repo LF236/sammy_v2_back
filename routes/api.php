@@ -42,3 +42,7 @@ Route::prefix('roles')->group(function () {
 	Route::get('/{id}', [RolsController::class, 'findById']);
 	Route::delete('/{id}', [RolsController::class, 'delete']);
 });
+
+Route::prefix('user')->middleware('auth:sanctum')->group(function() {
+	Route::post('/toggle_enable', [UserController::class, 'handleEnable']);
+});

@@ -72,10 +72,18 @@ class CreateAdminUser extends Command
 			$email,
 			$password
 		);
-		
 
+		$existsSuperAdmin = $this->userRepository->findOneByUserType('super_admin');
+		if($existsSuperAdmin) {
+			$this->error('A Super Admin user already exists. Please remove it before creating a new one.');
+			return 1;
+		}
+		
 		$data->password = Hash::make($data->password);
 		$newUser = $this->userRepository->create($data);
+		$this->userRepository->activateUser($newUser->id);
+		$this->userRepository->enableUser($newUser->id);
+		$this->userRepository->setUserType($newUser->id, 'super_admin');
 		$userEntity = UserEntity::fromModel($newUser);
 		$this->createUserRoleSuperAdmin($userEntity->id);
 	}

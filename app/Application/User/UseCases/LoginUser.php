@@ -21,6 +21,14 @@ class LoginUser {
 		if(Hash::check($password, $user->password) === false) {
 			throw new UnauthorizedHttpException('', 'Invalid credentials');
 		}
+
+		if($user->verifiedAt === null) {
+			throw new UnauthorizedHttpException('', 'User not verified, please check your email');
+		}
+
+		if($user->is_active === false) {
+			throw new UnauthorizedHttpException('', 'User not available, please contact support');
+		}
 	
 		$token = $this->userRepository->generateToken($user);
 		return $token;

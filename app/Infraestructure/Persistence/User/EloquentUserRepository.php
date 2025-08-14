@@ -45,6 +45,20 @@ class EloquentUserRepository implements UserRepositoryInterface {
 		return $user->save();
 	}
 
+	public function enableUser(int $userId): bool {
+		$user = EloquentUser::find($userId);
+		if(!$user) return false;
+		$user->is_active = true;
+		return $user->save();
+	}
+
+	public function disableUser(int $userId): bool {
+		$user = EloquentUser::find($userId);
+		if(!$user) return false;
+		$user->is_active = false;
+		return $user->save();
+	}
+
 	public function generateToken(UserEntity $user): string {
 		$eloquentUser = EloquentUser::find($user->id);
 		return $eloquentUser->createToken(
@@ -65,6 +79,7 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'users.verifiedAt as verifiedAt',
 				'users.type as type',
 				'users.password as password',
+				'users.is_active as is_active',
 				'r.id as role_id',
 				'r.name as role_name',
 				'r.key as role_key'
@@ -82,9 +97,11 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'id' => $firstUser->user_id,
 				'name' => $firstUser->name,
 				'email' => $firstUser->email,
-				'verified_at' => $firstUser->verified_at,
+				'verified_at' => $firstUser->verifiedAt,
 				'type' => $firstUser->type,
 				'password' => $firstUser->password,
+				'is_active' => $firstUser->is_active,
+
 			]);
 			$user->setRoles(
 				$role->map(function ($item) {
@@ -113,12 +130,24 @@ class EloquentUserRepository implements UserRepositoryInterface {
 			$mapped->setPermissions([]);
 		}
 
-
 		return $mapped;	
 	}
 
 	public function revokeToken(string $token): void {
 		$token = PersonalAccessToken::find($token);
 		$token?->delete();
+	}
+
+	public function setUserType(int $userId, string $type): bool {
+		$user = EloquentUser::find($userId);
+		if(!$user) return false;
+		$user->type = $type;
+		return $user->save();
+	}
+
+	public function findOneByUserType(string $type): ?UserEntity {
+		$userFromEloquent = EloquentUser::where('type', $type)->first();
+		if(!$userFromEloquent) return null;
+		return UserEntity::fromModel($userFromEloquent);
 	}
 }

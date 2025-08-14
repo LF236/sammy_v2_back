@@ -33,6 +33,7 @@ class CreateUser {
 		$userEntity = UserEntity::fromModel($newUser);
 		$this->createUserRoleDefault($userEntity->id);
 		$this->magicTokenRepository->sendToken($userEntity);
+		$this->userRepository->enableUser($userEntity->id);
 	}
 
 	private function createUserRoleDefault(int $userId) {

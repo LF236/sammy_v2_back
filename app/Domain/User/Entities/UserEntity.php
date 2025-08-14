@@ -11,6 +11,7 @@ class UserEntity {
 		public ?string $verifiedAt = null,
 		public string $type = 'user',
 		public ?string $password = null,
+		public ?bool $is_active = null,
 		public ?array $roles = [],
 		public ?array $permissions = []
 	) {}
@@ -23,7 +24,8 @@ class UserEntity {
 			email: $user->email,
 			verifiedAt: $user->verifiedAt,
 			type: $user->type,
-			password: $user->password
+			password: $user->password,
+			is_active: $user->is_active,
 		);
 	}
 
@@ -32,11 +34,12 @@ class UserEntity {
 			id: $data['id'] ?? null,
 			name: $data['name'] ?? '',
 			email: $data['email'] ?? '',
-			verifiedAt: $data['verified_at'] ?? null,
+			verifiedAt: $data['verifiedAt'] ?? null,
 			type: $data['type'] ?? 'user',
 			password: $data['password'] ?? null,
 			roles: $data['roles'] ?? [],
-			permissions: $data['permissions'] ?? []
+			permissions: $data['permissions'] ?? [],
+			is_active: $data['is_active'] ?? null,
 		);
 	}
 

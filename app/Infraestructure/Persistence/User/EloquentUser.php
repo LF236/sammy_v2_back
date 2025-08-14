@@ -15,7 +15,8 @@ class EloquentUser extends Authenticatable {
 		'email',
 		'password',
 		'verifiedAt',
-		'type'
+		'type',
+		'is_active',
 	];
 
 	protected $hidden = [

@@ -6,9 +6,11 @@ use App\Application\User\UseCases\CreateUser;
 use App\Application\User\UseCases\GetMe;
 use App\Application\User\UseCases\LoginUser;
 use App\Application\User\UseCases\LogoutUser;
+use App\Application\User\UseCases\ToggleEnableUser;
 use App\Http\Controllers\Controller;
 use App\Http\Request\User\CreateUserRequest;
 use App\Http\Request\User\LoginRequest;
+use App\Http\Request\User\ToggleEnableUserRequest;
 use Illuminate\Http\Request;
 
 class UserController extends Controller {
@@ -110,10 +112,33 @@ class UserController extends Controller {
 	}
 
 
+	public function handleEnable(ToggleEnableUserRequest $request, ToggleEnableUser $useCase) {
+		try {
+
+			$action = $request->input('action');
+			$userId = $request->input('user_id');
+			$user = $request->user();
+			$useCase->handle($action, $userId, $user->id);
+			return response()->json([
+				'message' => $action === 'enable' ? 'User enabled successfully' : 'User disabled successfully',
+				'action' => $action,
+			]);
+		} catch(\Throwable $e) {
+			return $this->handleException($e);
+		}
+	}
+
+
 	private function handleException(\Throwable $e) {
+		$statusCode = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException
+			? $e->getStatusCode()
+			: ($e->getCode() >= 100 && $e->getCode() < 600 
+				? $e->getCode() 
+			: 500);
+
 		return response()->json([
 			'message' => 'An error occurred',
 			'error' => $e->getMessage()
-		], 500);
+		], $statusCode);
 	}
 }

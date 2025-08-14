@@ -6,7 +6,9 @@ use App\Application\MagicToken\Services\Contracts\MagicLinkSeenderInterface;
 use App\Domain\MagicToken\Repositories\MagicTokenRepositoryInterface;
 use App\Domain\User\Entities\UserEntity;
 use App\Domain\User\Repositories\UserRepositoryInterface;
+use Carbon\Carbon;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class MagicLinkService implements MagicLinkSeenderInterface {
 	
@@ -52,15 +54,16 @@ class MagicLinkService implements MagicLinkSeenderInterface {
 
 		$lastToken = $this->magicTokenRepository->findLastByUserId($user->id);
 
-		$now = now();
-		$diff = $now->diffInMinutes($lastToken?->expires_at ?? $now);
-
-		if($lastToken && $diff < 15) {
-			throw new BadRequestHttpException(
-				'You can only request a new token every 15 minutes.'
-			);
+		if($lastToken) {
+			if(now()->gt($lastToken->expires_at)) {
+				$this->sendToken($user);
+				return;
+			} else {
+				$tokenDateParse = Carbon::parse($lastToken->expires_at);
+				throw new BadRequestHttpException('You already have a valid token, please check your email. You can request a new token after ' . $tokenDateParse->diffForHumans() . '.');
+			}
 		}
 
-		return;
+		throw new HttpException(503, 'Service Unavailable', null, ['Retry-After' => 60], 503);
 	}
 }

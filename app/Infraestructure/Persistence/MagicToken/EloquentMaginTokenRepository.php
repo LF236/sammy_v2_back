@@ -22,7 +22,7 @@ class EloquentMaginTokenRepository implements MagicTokenRepositoryInterface {
 		$magicToken = EloquentMaginToken::from('magic_tokens as mt')
 			->where('mt.id', $token)
 			->where('mt.used', false)
-			->where('mt.expires_at', '<=', now())
+			->where('mt.expires_at', '>=', now())
 			->first();
 
 		if(!$magicToken) {
