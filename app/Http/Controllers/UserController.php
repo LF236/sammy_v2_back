@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 use App\Application\User\DTOs\CreateUserDTO;
 use App\Application\User\UseCases\CreateUser;
 use App\Application\User\UseCases\GetMe;
+use App\Application\User\UseCases\GetUser;
+use App\Application\User\UseCases\GetUsers;
 use App\Application\User\UseCases\LoginUser;
 use App\Application\User\UseCases\LogoutUser;
 use App\Application\User\UseCases\ToggleEnableUser;
+use App\Application\User\UseCases\UpdateUser;
 use App\Http\Controllers\Controller;
+use App\Http\Request\Common\GetWithPaginationAndSearchRequest;
 use App\Http\Request\User\CreateUserRequest;
+use App\Http\Request\User\GetUsersFilters;
 use App\Http\Request\User\LoginRequest;
 use App\Http\Request\User\ToggleEnableUserRequest;
+use App\Http\Request\User\UpdateUserRequest;
 use Illuminate\Http\Request;
 
 class UserController extends Controller {
@@ -128,6 +134,45 @@ class UserController extends Controller {
 		}
 	}
 
+	public function getUsers(GetWithPaginationAndSearchRequest $requestQuerys, GetUsersFilters $userFiltersRequest, GetUsers $useCase) {
+		try {
+			$paginationDto = $requestQuerys->toPaginationDto();
+			$searchDto = $requestQuerys->toSearchDto();
+			$filtersUsers = $userFiltersRequest->toDto();
+			
+			$users = $useCase->execute($paginationDto, $searchDto, $filtersUsers);
+			return response()->json([
+				'data' => $users,
+				'message' => 'Users retrieved successfully',
+			], 200);
+		} catch (\Throwable $e) {
+			return $this->handleException($e);
+		}
+	}
+
+	public function findById($userId, GetUser $useCase) {
+		try {
+			$user = $useCase->handle($userId);
+			return response()->json([
+				'user' => $user,
+				'message' => 'User retrieved successfully'
+			], 200);
+		} catch(\Throwable $e) {
+			return $this->handleException($e);
+		}
+	}
+
+	public function update($user_id, UpdateUserRequest $request, UpdateUser $useCase) {
+		try {
+			$updatedUser = $useCase->handle($user_id, $request->toDto());
+			return response()->json([
+				'message' => 'User updated successfully',
+				'user' => $updatedUser
+			], 200);
+		} catch(\Throwable $e) {
+			return $this->handleException($e);
+		}
+	}
 
 	private function handleException(\Throwable $e) {
 		$statusCode = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException

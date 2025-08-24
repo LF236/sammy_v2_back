@@ -19,7 +19,6 @@ class GetWithPaginationAndSearchRequest extends FormRequest {
 	}
 
 	public function toPaginationDto() : PaginationDto {
-
 		return new PaginationDto(
 			$this->input('offset', 0),
 			$this->input('limit', 10)

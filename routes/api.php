@@ -6,9 +6,6 @@ use App\Http\Controllers\RolsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', [UserController::class, 'index']);
-
-
 Route::post('/auth/signup', [UserController::class, 'store']);
 Route::post('/auth/login', [UserController::class, 'login']);
 
@@ -45,4 +42,7 @@ Route::prefix('roles')->group(function () {
 
 Route::prefix('user')->middleware('auth:sanctum')->group(function() {
 	Route::post('/toggle_enable', [UserController::class, 'handleEnable']);
+	Route::get('/', [UserController::class, 'getUsers']);
+	Route::get('/find-one/{id}', [UserController::class, 'findById'])->where('id', '[0-9]+');
+	Route::post('/{id}', [UserController::class, 'update'])->where('id', '[0-9]+');
 });

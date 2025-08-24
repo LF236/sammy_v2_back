@@ -16,4 +16,5 @@ interface RolsRepository {
 	public function exists(string $id): bool;
 	public function count(SearchDto $searchDto);
 	public function findByKey(string $key): ?RolEntity;
+	public function findByName(string $name): ?RolEntity;
 }

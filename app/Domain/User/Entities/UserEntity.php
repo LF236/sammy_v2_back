@@ -75,4 +75,19 @@ class UserEntity {
 		}
 		return $this;
 	}
+
+	public function dropPermissions() : self {
+		unset($this->permissions);	
+		return $this;
+	}
+
+	public function dropRoles() : self {
+		unset($this->roles);
+		return $this;
+	}
+
+	public function hidePassword() : self {
+		unset($this->password);
+		return $this;
+	}
 }

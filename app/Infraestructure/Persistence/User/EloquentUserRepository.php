@@ -1,19 +1,28 @@
 <?php
 namespace App\Infraestructure\Persistence\User;
 
+use App\Application\Common\Dtos\PaginationDto;
+use App\Application\Common\Dtos\SearchDto;
 use App\Application\User\DTOs\CreateUserDTO;
+use App\Application\User\DTOs\GetUsersDto;
+use App\Application\User\DTOs\UpdateUserDto;
 use App\Domain\Permission\Repositories\PermissionRepository;
 use App\Domain\User\Entities\UserEntity;
 use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Domain\UserRole\Repositories\UserRoleRepository;
 use App\Infraestructure\Persistence\User\EloquentUser;
+use Error;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class EloquentUserRepository implements UserRepositoryInterface {
 	private $permissionsRepository;
+	private $userRoleRepository;
 
-	public function __construct(PermissionRepository $permissionsRepository) {
+	public function __construct(PermissionRepository $permissionsRepository, UserRoleRepository $userRoleRepository) {
 		$this->permissionsRepository = $permissionsRepository;
+		$this->userRoleRepository = $userRoleRepository;
 	}
 	
 
@@ -27,9 +36,90 @@ class EloquentUserRepository implements UserRepositoryInterface {
 		]);
 	}
 
-	public function all() {
-		// Implementation for retrieving all users
-		return [];
+	public function all(PaginationDto $paginationDto, SearchDto $searchDto, GetUsersDto $getUsersDto) : array {
+		$limit = $paginationDto->limit;
+		$offset = $paginationDto->offset;
+		$search = $searchDto->search;
+		$query = EloquentUser::query('users');
+
+		if($search) {
+			$query = $query->where(function($q) use ($search) {
+				$q->where('name', 'like', "%${search}%")
+					->orWhere('email', 'like', "%${search}%");
+			});
+		}
+
+		if($getUsersDto->is_active !== null) {
+			$query = $query->where('is_active', $getUsersDto->is_active);
+		}
+
+		if($getUsersDto->is_verified !== null) {
+			if($getUsersDto->is_verified) {
+				$query = $query->whereNotNull('verifiedAt');
+			} else {
+				$query = $query->whereNull('verifiedAt');
+			}
+		}
+		
+		if($getUsersDto->roles !== null && count($getUsersDto->roles) > 0) {
+			$query = $query->whereIn('id', function($q) use ($getUsersDto) {
+				$q->select('user_id')
+					->from('user_roles')
+					->whereIn('role_id', $getUsersDto->roles);
+			});
+		}
+
+		$query = $query->select('id')
+		->offset($offset)
+		->limit($limit)
+		->pluck('id');
+		
+		$query = EloquentUser::query('users')
+			->whereIn('users.id', $query)
+			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'users.id')
+			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+			->select(
+				'users.id as user_id',
+				'users.name as name',
+				'users.email as email',
+				'users.verifiedAt as verifiedAt',
+				'users.type as type',
+				'users.password as password',
+				'users.is_active as is_active',
+				'r.id as role_id',
+				'r.name as role_name',
+				'r.key as role_key'
+			)->get();
+
+		$users = $query->groupBy('user_id')->map(function ($role) {
+			$fistUser = $role->first();
+			$userEntity = UserEntity::fromObj(
+				[
+					'id' => $fistUser->user_id,
+					'name' => $fistUser->name,
+					'email' => $fistUser->email,
+					'verifiedAt' => $fistUser->verifiedAt,
+					'type' => $fistUser->type,
+					'password' => $fistUser->password,
+					'is_active' => $fistUser->is_active,
+				]
+			);
+
+			$roles = $role->filter(fn($row) => $row->role_id !== null)
+				->map(fn ($item) => [
+					'id' => $item->role_id,
+					'name' => $item->role_name,
+					'key' => $item->role_key,
+				])->values()->toArray();
+
+			$userEntity->setRoles($roles);
+			$userEntity->dropPermissions();
+			$userEntity->hidePassword();
+
+			return $userEntity;
+		})->values()->toArray();
+
+		return $users;
 	}
 
 	public function findByEmail(string $email): UserEntity | null {
@@ -70,8 +160,8 @@ class EloquentUserRepository implements UserRepositoryInterface {
 	public function findById(int $id): ?UserEntity {
 		$userFromEloquent = EloquentUser::query('users')
 			->where('users.id', $id)
-			->join('user_roles as ur', 'ur.user_id', '=', 'users.id')
-			->join('roles as r', 'r.id', '=', 'ur.role_id')
+			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'users.id')
+			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
 			->select(
 				'users.id as user_id',
 				'users.name as name',
@@ -84,14 +174,13 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'r.name as role_name',
 				'r.key as role_key'
 			)
-			->get();
+		->get();
 		
 		if(count($userFromEloquent) == 0) {
 			return null;
 		}
 
-
-		$mapped = collect($userFromEloquent)->groupBy('id')->map(function ($role) {
+		$mapped = collect($userFromEloquent)->groupBy('user_id')->map(function ($role) {
 			$firstUser = $role->first();
 			$user = UserEntity::fromObj([
 				'id' => $firstUser->user_id,
@@ -103,22 +192,23 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'is_active' => $firstUser->is_active,
 
 			]);
-			$user->setRoles(
-				$role->map(function ($item) {
-					return [
-						'id' => $item->role_id,
-						'name' => $item->role_name,
-						'key' => $item->role_key,
-					];
-				})->toArray()
-			);
+			$roles = $role->map(fn($row) => $row->role_id !== null ? $row : null)
+				->filter();
 
+			$user->setRoles($roles->map(function ($item) {
+				return [
+					'id' => $item->role_id,
+					'name' => $item->role_name,
+					'key' => $item->role_key,
+				];
+			})->values()->toArray());
 			return $user;
 		});
 		$mapped = $mapped->values()->first();
 		$roles = $mapped->getRoles();
 		$permission[] = [];
 		foreach ($roles as $role) {
+			if(!$role['id']) continue;
 			$rolePermissions = $this->permissionsRepository->findByRoleId($role['id']);
 			if(count($rolePermissions) > 0) {
 				$permission[] = $rolePermissions;
@@ -149,5 +239,32 @@ class EloquentUserRepository implements UserRepositoryInterface {
 		$userFromEloquent = EloquentUser::where('type', $type)->first();
 		if(!$userFromEloquent) return null;
 		return UserEntity::fromModel($userFromEloquent);
+	}
+
+	public function update(int $userId, UpdateUserDto $updateUser) : UserEntity {
+		DB::beginTransaction();
+		try {
+			$user = EloquentUser::find($userId);
+			if($updateUser->type !== null) {
+				$user->type = $updateUser->type;
+			}
+
+			$rolesIdsToUpdate = $updateUser->roles_ids ?? [];
+
+			if(count($rolesIdsToUpdate) === 0) {
+				$this->userRoleRepository->deleteByUserId($userId);
+			} else {
+				$this->userRoleRepository->deleteByUserId($userId);
+				foreach($rolesIdsToUpdate as $roleId) {
+					$this->userRoleRepository->createOne($userId, $roleId);
+				}
+			}
+			$user->save();
+			DB::commit();
+			return $this->findById($userId) ?? new UserEntity();
+		} catch (\Throwable $e) {
+			DB::rollBack();
+			throw $e;
+		}
 	}
 }

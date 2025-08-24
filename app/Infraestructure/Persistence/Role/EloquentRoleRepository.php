@@ -229,4 +229,23 @@ class EloquentRoleRepository implements RolsRepository {
 		}
 		return $query->count();
 	}
+
+	public function findByName(string $name) : ?RolEntity {
+		$rol = EloquentRole::query('roles')
+			->where('key', $name)
+			->first();
+
+		if(!$rol) {
+			return null;
+		}
+
+		return RolEntity::fromObj([
+			'id' => $rol->id,
+			'name' => $rol->name,
+			'key' => $rol->key,
+			'description' => $rol->description,
+			'is_active' => $rol->is_active,
+			'permissions' => []
+		]);
+	}
 }

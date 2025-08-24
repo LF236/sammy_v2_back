@@ -25,4 +25,8 @@ class RolEntity {
 	public function setPermissions(array $permissions): void {
 		$this->permissions = $permissions;
 	}
+
+	public function getId() : string {
+		return $this->id;
+	}
 }
