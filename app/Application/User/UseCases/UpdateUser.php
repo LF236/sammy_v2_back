@@ -34,6 +34,14 @@ class UpdateUser {
         }
 
         $superAdminRol = $this->roleRepository->findByName('super_admin');
+
+        if($updateUserDto->roles_ids && count($updateUserDto->roles_ids) > 0) {
+            $roles = $this->roleRepository->findByIdsIfIsActive($updateUserDto->roles_ids);
+            if(count($roles) !== count($updateUserDto->roles_ids)) {
+                throw new BadRequestHttpException('One or more roles are invalid or inactive');
+            }
+        }
+
         if($superAdminRol) {
             $id = $superAdminRol->getId();
             if(in_array($id, $updateUserDto->roles_ids ?? [])) {

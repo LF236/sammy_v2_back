@@ -251,6 +251,10 @@ class EloquentUserRepository implements UserRepositoryInterface {
 
 			$rolesIdsToUpdate = $updateUser->roles_ids ?? [];
 
+			if($updateUser->is_active !== null) {
+				$user->is_active = $updateUser->is_active;
+			}
+
 			if(count($rolesIdsToUpdate) === 0) {
 				$this->userRoleRepository->deleteByUserId($userId);
 			} else {

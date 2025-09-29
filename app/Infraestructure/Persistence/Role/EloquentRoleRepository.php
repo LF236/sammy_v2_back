@@ -248,4 +248,21 @@ class EloquentRoleRepository implements RolsRepository {
 			'permissions' => []
 		]);
 	}
+
+	public function findByIdsIfIsActive(array $ids) : array {
+		$roles = EloquentRole::whereIn('id', $ids)
+			->where('is_active', true)
+			->get();
+
+		return $roles->map(function($rol) {
+			return RolEntity::fromObj([
+				'id' => $rol->id,
+				'name' => $rol->name,
+				'key' => $rol->key,
+				'description' => $rol->description,
+				'is_active' => $rol->is_active,
+				'permissions' => []
+			]);
+		})->toArray();
+	}
 }
