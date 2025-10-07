@@ -9,6 +9,7 @@ use App\Application\User\UseCases\GetUser;
 use App\Application\User\UseCases\GetUsers;
 use App\Application\User\UseCases\LoginUser;
 use App\Application\User\UseCases\LogoutUser;
+use App\Application\User\UseCases\RefreshToken;
 use App\Application\User\UseCases\ToggleEnableUser;
 use App\Application\User\UseCases\UpdateUser;
 use App\Http\Controllers\Controller;
@@ -103,6 +104,22 @@ class UserController extends Controller {
 				'message' => 'User retrieved successfully'
 			], 200);
 		} catch (\Throwable $e) {
+			return $this->handleException($e);
+		}
+	}
+
+	public function refresh(Request $request, RefreshToken $useCase) {
+		try {
+			$user = $request->user();
+			$token = $user->currentAccessToken();
+			$newToken = $useCase->handle($token->id, $user->email);
+			return response()->json([
+				'message' => 'Token refreshed successfully',
+				'token' => $newToken,
+				'type' => 'Bearer'
+			], 200);
+
+		} catch ( \Throwable $e) {
 			return $this->handleException($e);
 		}
 	}

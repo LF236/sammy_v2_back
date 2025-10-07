@@ -18,6 +18,7 @@ Route::prefix('magic_token')->group(function () {
 Route::prefix('auth')->middleware('auth:sanctum')->group(function () {
 	Route::get('/me', [UserController::class, 'me']);
 	Route::post('/logout', [UserController::class, 'logout']);
+	Route::post('/refresh', [UserController::class, 'refresh']);
 });
 
 
