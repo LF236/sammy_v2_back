@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Application\User\DTOs\CreateUserDTO;
+use App\Application\User\UseCases\CountUser;
 use App\Application\User\UseCases\CreateUser;
 use App\Application\User\UseCases\GetMe;
 use App\Application\User\UseCases\GetUser;
@@ -168,6 +169,19 @@ class UserController extends Controller {
 			return response()->json([
 				'message' => 'User updated successfully',
 				'user' => $updatedUser
+			], 200);
+		} catch(\Throwable $e) {
+			return $this->handleException($e);
+		}
+	}
+
+	public function countUsers(GetUsersFilters $userFiltersRequest, GetWithPaginationAndSearchRequest $requestQuerys, CountUser $userCase) {
+		try {
+			$dto = $userFiltersRequest->toDto();
+			$searchDto = $requestQuerys->toSearchDto();
+			return response()->json([
+				'count' => $userCase->execute($searchDto, $dto),
+				'message' => 'User count retrieved successfully'
 			], 200);
 		} catch(\Throwable $e) {
 			return $this->handleException($e);

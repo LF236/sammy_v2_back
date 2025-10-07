@@ -42,6 +42,7 @@ Route::prefix('roles')->group(function () {
 
 Route::prefix('user')->middleware('auth:sanctum')->group(function() {
 	Route::get('/', [UserController::class, 'getUsers']);
+	Route::get('/count/get', [UserController::class, 'countUsers']);
 	Route::get('/find-one/{id}', [UserController::class, 'findById'])->where('id', '[0-9]+');
 	Route::post('/{id}', [UserController::class, 'update'])->where('id', '[0-9]+');
 });

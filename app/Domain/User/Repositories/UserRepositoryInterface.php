@@ -27,4 +27,5 @@ interface UserRepositoryInterface {
 	public function revokeToken(string $token) : void;
 	public function setUserType(int $userId, string $type) : bool;
 	public function findOneByUserType(string $type) : UserEntity | null;
+	public function count(SearchDto $searchDto, GetUsersDto $getUsersDto) : int;
 }

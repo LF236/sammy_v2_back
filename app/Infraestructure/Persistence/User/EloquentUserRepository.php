@@ -24,6 +24,43 @@ class EloquentUserRepository implements UserRepositoryInterface {
 		$this->permissionsRepository = $permissionsRepository;
 		$this->userRoleRepository = $userRoleRepository;
 	}
+
+	public function count(SearchDto $searchDto, GetUsersDto $getUsersDto) : int {
+		$query = EloquentUser::query('users');
+		$search = $searchDto->search;
+
+		if($search) {
+			$query = $query->where(function($q) use ($search) {
+				$q->where('name', 'like', "%${search}%")
+					->orWhere('email', 'like', "%${search}%");
+			});
+		}
+
+		if($getUsersDto->is_active !== null) {
+			$query = $query->where('is_active', $getUsersDto->is_active);
+		}
+
+		if($getUsersDto->is_verified !== null) {
+			if($getUsersDto->is_verified) {
+				$query = $query->whereNotNull('verifiedAt');
+			} else {
+				$query = $query->whereNull('verifiedAt');
+			}
+		}
+
+		if($getUsersDto->roles !== null && count($getUsersDto->roles) > 0) {
+			$query = $query->whereIn('id', function($q) use ($getUsersDto) {
+				$q->select('user_id')
+					->from('user_roles')
+					->whereIn('role_id', $getUsersDto->roles);
+			});
+		}
+
+
+		$count = $query->count();
+		if($count) return $count;
+		return 0;
+	}
 	
 
 	public function create(CreateUserDTO $data) {
