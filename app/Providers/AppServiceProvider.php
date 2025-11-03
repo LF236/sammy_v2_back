@@ -8,13 +8,17 @@ use App\Application\MagicToken\Services\Contracts\MagicLinkSeenderInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infraestructure\Persistence\User\EloquentUserRepository;
 use App\Application\MagicToken\Services\MagicLinkService;
+use App\Domain\Auth\AuthUserProviderInterface;
 use App\Domain\MagicToken\Repositories\MagicTokenRepositoryInterface;
 use App\Domain\Permission\Repositories\PermissionRepository;
+use App\Domain\Person\Repesitories\PersonRepository;
 use App\Domain\Rols\Repositories\RolsRepository;
 use App\Domain\RolsPermission\Repositories\RolsPermissionRepository;
 use App\Domain\UserRole\Repositories\UserRoleRepository;
+use App\Infraestructure\Laravel\Auth\LaravelAuthUserProvider;
 use App\Infraestructure\Persistence\MagicToken\EloquentMaginTokenRepository;
 use App\Infraestructure\Persistence\Permission\EloquentPermissionRepository;
+use App\Infraestructure\Persistence\Person\EloquentPersonRepository;
 use App\Infraestructure\Persistence\Role\EloquentRoleRepository;
 use App\Infraestructure\Persistence\RolsPermission\EloquentRolPermissionRepository;
 use App\Infraestructure\Persistence\UserRole\EloquentUserRoleRepository;
@@ -55,5 +59,11 @@ class AppServiceProvider extends ServiceProvider
 
 		// UserRole
 		$this->app->bind(UserRoleRepository::class, EloquentUserRoleRepository::class);
+
+		// Person
+		$this->app->bind(PersonRepository::class, EloquentPersonRepository::class);
+
+		// AuthUserProvider
+		$this->app->bind(AuthUserProviderInterface::class, LaravelAuthUserProvider::class);
     }
 }

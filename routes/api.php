@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\MagicToken\MagicTokenController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PersonController;
 use App\Http\Controllers\RolsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -46,4 +47,8 @@ Route::prefix('user')->middleware('auth:sanctum')->group(function() {
 	Route::get('/count/get', [UserController::class, 'countUsers']);
 	Route::get('/find-one/{id}', [UserController::class, 'findById'])->where('id', '[0-9]+');
 	Route::post('/{id}', [UserController::class, 'update'])->where('id', '[0-9]+');
+});
+
+Route::prefix('person')->middleware('auth:sanctum')->group(function() {
+	Route::post('/', [PersonController::class, 'store']);
 });
