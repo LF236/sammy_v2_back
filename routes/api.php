@@ -51,4 +51,5 @@ Route::prefix('user')->middleware('auth:sanctum')->group(function() {
 
 Route::prefix('person')->middleware('auth:sanctum')->group(function() {
 	Route::post('/', [PersonController::class, 'store']);
+	Route::put('/', [PersonController::class, 'update']);
 });

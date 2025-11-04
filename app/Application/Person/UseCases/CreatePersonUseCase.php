@@ -15,6 +15,7 @@ class CreatePersonUseCase {
     public function handle(CreatePersonDto $dto) {
         $user_id = $this->authUserProvider->getUserId();
         $person = $this->personRepository->findByUserId($user_id);
+        
         if($person) {
             throw new BadRequestException('Person already exists for this user');
         }

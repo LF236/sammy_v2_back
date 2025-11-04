@@ -7,6 +7,7 @@ use App\Application\User\DTOs\CreateUserDTO;
 use App\Application\User\DTOs\GetUsersDto;
 use App\Application\User\DTOs\UpdateUserDto;
 use App\Domain\Permission\Repositories\PermissionRepository;
+use App\Domain\Person\Entities\PersonEntity;
 use App\Domain\User\Entities\UserEntity;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Domain\UserRole\Repositories\UserRoleRepository;
@@ -62,7 +63,6 @@ class EloquentUserRepository implements UserRepositoryInterface {
 		return 0;
 	}
 	
-
 	public function create(CreateUserDTO $data) {
 		return EloquentUser::create([
 			'name' => $data->name,
@@ -115,6 +115,7 @@ class EloquentUserRepository implements UserRepositoryInterface {
 			->whereIn('users.id', $query)
 			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'users.id')
 			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+			->leftJoin('person', 'person.user_id', '=', 'users.id')
 			->select(
 				'users.id as user_id',
 				'users.name as name',
@@ -125,7 +126,23 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'users.is_active as is_active',
 				'r.id as role_id',
 				'r.name as role_name',
-				'r.key as role_key'
+				'r.key as role_key',
+				DB::raw("
+					CASE
+						WHEN person.id IS NOT NULL THEN
+							JSON_OBJECT(
+								'names', person.names,
+								'last_name', person.last_name,
+								'second_last_name', person.second_last_name,
+								'birth_date', person.birth_date,
+								'curp', person.curp,
+								'rfc', person.rfc,
+								'sex', person.sex,
+								'created_at', person.created_at
+							)
+						ELSE NULL
+					END AS person
+				")
 			)->get();
 
 		$users = $query->groupBy('user_id')->map(function ($role) {
@@ -141,6 +158,13 @@ class EloquentUserRepository implements UserRepositoryInterface {
 					'is_active' => $fistUser->is_active,
 				]
 			);
+
+			if(isset($fistUser->person)) {
+				$personData = json_decode($fistUser->person);
+				$personData = PersonEntity::fromObject($personData);
+				$personData = $personData->dropInnecesaryData();
+				$userEntity->setPerson($personData);
+			}
 
 			$roles = $role->filter(fn($row) => $row->role_id !== null)
 				->map(fn ($item) => [
@@ -199,6 +223,7 @@ class EloquentUserRepository implements UserRepositoryInterface {
 			->where('users.id', $id)
 			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'users.id')
 			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+			->leftJoin('person', 'person.user_id', '=', 'users.id')
 			->select(
 				'users.id as user_id',
 				'users.name as name',
@@ -209,7 +234,23 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'users.is_active as is_active',
 				'r.id as role_id',
 				'r.name as role_name',
-				'r.key as role_key'
+				'r.key as role_key',
+				DB::raw("
+					CASE
+						WHEN person.id IS NOT NULL THEN
+							JSON_OBJECT(
+								'names', person.names,
+								'last_name', person.last_name,
+								'second_last_name', person.second_last_name,
+								'birth_date', person.birth_date,
+								'curp', person.curp,
+								'rfc', person.rfc,
+								'sex', person.sex,
+								'created_at', person.created_at
+							)
+						ELSE NULL
+					END AS person
+				")
 			)
 		->get();
 		
@@ -219,6 +260,7 @@ class EloquentUserRepository implements UserRepositoryInterface {
 
 		$mapped = collect($userFromEloquent)->groupBy('user_id')->map(function ($role) {
 			$firstUser = $role->first();
+			$personData = null;
 			$user = UserEntity::fromObj([
 				'id' => $firstUser->user_id,
 				'name' => $firstUser->name,
@@ -229,6 +271,14 @@ class EloquentUserRepository implements UserRepositoryInterface {
 				'is_active' => $firstUser->is_active,
 
 			]);
+
+			if (isset($firstUser->person)) {
+				$personData = json_decode($firstUser->person);
+				$personData = PersonEntity::fromObject($personData);
+				$personData = $personData->dropInnecesaryData();
+				$user->setPerson($personData);
+			}
+
 			$roles = $role->map(fn($row) => $row->role_id !== null ? $row : null)
 				->filter();
 

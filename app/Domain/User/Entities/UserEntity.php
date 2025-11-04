@@ -1,6 +1,7 @@
 <?php
 namespace App\Domain\User\Entities;
 
+use App\Domain\Person\Entities\PersonEntity;
 use App\Infraestructure\Persistence\User\EloquentUser;
 
 class UserEntity {
@@ -13,7 +14,8 @@ class UserEntity {
 		public ?string $password = null,
 		public ?bool $is_active = null,
 		public ?array $roles = [],
-		public ?array $permissions = []
+		public ?array $permissions = [],
+		public ?PersonEntity $person = null,
 	) {}
 
 
@@ -88,6 +90,11 @@ class UserEntity {
 
 	public function hidePassword() : self {
 		unset($this->password);
+		return $this;
+	}
+
+	public function setPerson(PersonEntity $person) : self {
+		$this->person = $person;
 		return $this;
 	}
 }

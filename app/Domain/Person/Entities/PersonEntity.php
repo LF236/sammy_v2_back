@@ -2,6 +2,7 @@
 namespace App\Domain\Person\Entities;
 
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Carbon;
 
 class PersonEntity {
     public function __construct(
@@ -10,13 +11,13 @@ class PersonEntity {
         public string $names,
         public string $last_name,
         public ?string $second_last_name,
-        public ?Date $birth_date,
+        public ?Carbon $birth_date,
         public string $curp,
         public ?string $rfc,
         public ?string $sex,
-        public ?Date $created_at,
-        public ?Date $updated_at,
-        public ?Date $deleted_at
+        public ?Carbon $created_at,
+        public ?Carbon $updated_at,
+        public ?Carbon $deleted_at
     ) {}
 
     public static function fromObject(object $obj): PersonEntity {
@@ -34,5 +35,13 @@ class PersonEntity {
             updated_at: isset($obj->updated_at) ? Date::parse($obj->updated_at) : null,
             deleted_at: isset($obj->deleted_at) ? Date::parse($obj->deleted_at) : null
         );
+    }
+
+    public function dropInnecesaryData(): self {
+        unset($this->updated_at);
+        unset($this->deleted_at);
+        unset($this->id);
+        unset($this->user_id);
+        return $this;
     }
 };
