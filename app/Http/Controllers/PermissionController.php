@@ -21,7 +21,8 @@ class PermissionController extends Controller {
 		$dto = $request->toPaginationDto();
 
 		$dtoSearch = $request->toSearchDto();
-		$permissions = $useCase->handle($dto, $dtoSearch);
+		$permissionDto = $request->toPermissionDto();
+		$permissions = $useCase->handle($dto, $dtoSearch, $permissionDto);
 			
 
 		return response()->json([

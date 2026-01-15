@@ -5,10 +5,11 @@ use App\Application\Common\Dtos\PaginationDto;
 use App\Application\Common\Dtos\SearchDto;
 use App\Application\Permission\DTOs\CreatePermissionDto;
 use App\Application\Permission\DTOs\UpdatePermissionDto;
+use App\Application\Permission\DTOs\GetPermissionDto;
 use App\Domain\Permission\Entities\PermissionEntity;
 
 interface PermissionRepository {
-	public function all(PaginationDto $paginationDto, SearchDto $searchDto) : array;
+	public function all(PaginationDto $paginationDto, SearchDto $searchDto, GetPermissionDto $getPermissionDto) : array;
 	public function count(SearchDto $searchDto) : int;
 	public function findById(string $id) : PermissionEntity | null;
 	public function create(CreatePermissionDto $dto) : PermissionEntity | null;

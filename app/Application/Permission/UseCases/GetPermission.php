@@ -3,6 +3,7 @@ namespace App\Application\Permission\UseCases;
 
 use App\Application\Common\Dtos\PaginationDto;
 use App\Application\Common\Dtos\SearchDto;
+use App\Application\Permission\DTOs\GetPermissionDto;
 use App\Domain\Permission\Repositories\PermissionRepository;
 
 class GetPermission {
@@ -11,9 +12,9 @@ class GetPermission {
 	public function __construct(PermissionRepository $repository) {
 		$this->repository = $repository;
 	}
-
-	public function handle(PaginationDto $pagination, SearchDto $search) {
-		$permissions = $this->repository->all($pagination, $search);
+	// 1 = true, 0 = false
+	public function handle(PaginationDto $pagination, SearchDto $search, GetPermissionDto $getPermissionDto) {
+		$permissions = $this->repository->all($pagination, $search, $getPermissionDto);
 
 		if(empty($permissions)) {
 			return null;

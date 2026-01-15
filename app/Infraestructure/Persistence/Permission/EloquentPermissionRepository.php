@@ -4,6 +4,7 @@ namespace App\Infraestructure\Persistence\Permission;
 use App\Application\Common\Dtos\PaginationDto;
 use App\Application\Common\Dtos\SearchDto;
 use App\Application\Permission\DTOs\CreatePermissionDto;
+use App\Application\Permission\DTOs\GetPermissionDto;
 use App\Application\Permission\DTOs\UpdatePermissionDto;
 use App\Domain\Permission\Repositories\PermissionRepository;
 use App\Domain\Permission\Entities\PermissionEntity;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EloquentPermissionRepository implements PermissionRepository {
-	public function all(PaginationDto $pagination, SearchDto $search) : array {
+	public function all(PaginationDto $pagination, SearchDto $search, GetPermissionDto $getPermissionDto) : array {
 		$query = EloquentPermission::query();
 
 		if ($search->search) {
@@ -20,11 +21,19 @@ class EloquentPermissionRepository implements PermissionRepository {
 				->orWhereRaw('LOWER(permissions.key) LIKE ?', ['%' . Str::lower($search->search) . '%']);
 		}
 
+		if ($getPermissionDto->is_active !== null) {
+			$query->where('permissions.is_active', $getPermissionDto->is_active);
+		}
+
 		$query->limit($pagination->limit)
 			->offset($pagination->offset);
 		
 		$query = $query->leftJoin('role_permission as rp', 'rp.permission_id', '=', 'permissions.id')
 				 ->leftJoin('roles as r', 'r.id', '=', 'rp.role_id');
+
+		if(count($getPermissionDto->roles_ids) > 0) {
+			$query->whereIn('r.id', $getPermissionDto->roles_ids);
+		}
 
 		$query->select([
 			'permissions.id as id',
@@ -70,18 +79,37 @@ class EloquentPermissionRepository implements PermissionRepository {
 
 	public function findById(string $id) : PermissionEntity | null {
 		$permission = EloquentPermission::query()
-			->where('id', $id)
+			->leftJoin('role_permission as rp', 'rp.permission_id', '=', 'permissions.id')
+			->leftJoin('roles as r', 'r.id', '=', 'rp.role_id')
+			->where('permissions.id', $id)
+			->where('permissions.deleted_at', null)
+			->where('r.deleted_at', null)
 			->select([
-				'id',
-				'name',
-				'description',
-				'is_active',
-				'key'
+				'permissions.id as id',
+				'permissions.name as name',
+				'permissions.description as description',
+				'permissions.is_active as is_active',
+				'permissions.key as key',
+				DB::raw('JSON_ARRAYAGG(JSON_OBJECT("id", r.id, "name", r.name, "description", r.description, "is_active", r.is_active, "key", r.key)) as roles'),
 			])
+			->groupBy('permissions.id', 'permissions.name', 'permissions.description', 'permissions.is_active', 'permissions.key')
 			->first();
 
 		if (!$permission) return null;
-		return PermissionEntity::fromEloquentEntity($permission);
+		if($permission->roles) {
+			$roles = json_decode($permission->roles, true) ?? [];
+			$firsRole = $roles[0] ?? null;
+
+			if($firsRole && isset($firsRole['id'])) {
+				$permission->roles = $roles;
+			} else {
+				$permission->roles = [];
+			}
+		} else {
+			$permission->roles = [];
+		}
+
+		return PermissionEntity::fromObject($permission);
 	}
 
 	public function create(CreatePermissionDto $dto) : PermissionEntity | null {
@@ -112,7 +140,7 @@ class EloquentPermissionRepository implements PermissionRepository {
 
 		if (!$permission->save()) return null;
 
-		return PermissionEntity::fromEloquentEntity($permission);
+		return $this->findById($id);
 	}
 
 	public function delete(string $id) : bool {

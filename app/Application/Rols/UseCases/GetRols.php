@@ -4,6 +4,7 @@ namespace App\Application\Rols\UseCases;
 use App\Application\Common\Dtos\PaginationDto;
 use App\Application\Common\Dtos\SearchDto;
 use App\Domain\Rols\Repositories\RolsRepository;
+use App\Application\Rols\DTOs\GetRolDto;
 
 class GetRols {
 	private $rolRepository;
