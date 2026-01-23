@@ -2,6 +2,7 @@
 namespace App\Application\Permission\UseCases;
 
 use App\Application\Common\Dtos\SearchDto;
+use App\Application\Permission\DTOs\CountPermissionDto;
 use App\Domain\Permission\Repositories\PermissionRepository;
 
 class CountPermission {
@@ -11,7 +12,7 @@ class CountPermission {
 		$this->repository = $repository;
 	}
 
-	public function handle(SearchDto $search) : int {
-		return $this->repository->count($search);
+	public function handle(SearchDto $search, CountPermissionDto $countPermissionDto) : int {
+		return $this->repository->count($search, $countPermissionDto);
 	}
 }

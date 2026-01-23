@@ -3,6 +3,7 @@ namespace App\Infraestructure\Persistence\Permission;
 
 use App\Application\Common\Dtos\PaginationDto;
 use App\Application\Common\Dtos\SearchDto;
+use App\Application\Permission\DTOs\CountPermissionDto;
 use App\Application\Permission\DTOs\CreatePermissionDto;
 use App\Application\Permission\DTOs\GetPermissionDto;
 use App\Application\Permission\DTOs\UpdatePermissionDto;
@@ -17,8 +18,10 @@ class EloquentPermissionRepository implements PermissionRepository {
 		$query = EloquentPermission::query();
 
 		if ($search->search) {
-			$query->whereRaw('LOWER(permissions.name) LIKE ?', ['%' . Str::lower($search->search) . '%'])
-				->orWhereRaw('LOWER(permissions.key) LIKE ?', ['%' . Str::lower($search->search) . '%']);
+			$query->where(function($q) use ($search) {
+				$q->whereRaw('LOWER(permissions.name) LIKE ?', ['%' . Str::lower($search->search) . '%'])
+				  ->orWhereRaw('LOWER(permissions.key) LIKE ?', ['%' . Str::lower($search->search) . '%']);
+			});
 		}
 
 		if ($getPermissionDto->is_active !== null) {
@@ -66,15 +69,31 @@ class EloquentPermissionRepository implements PermissionRepository {
 		})->toArray();
 	}
 
-	public function count(SearchDto $search) : int {
+	public function count(SearchDto $search, CountPermissionDto $countPermissionDto) : int {
 		$query = EloquentPermission::query();
+		$query->where('permissions.deleted_at', null);
 
 		if ($search->search) {
-			$query->whereRaw('LOWER(name) LIKE ?', ['%' . Str::lower($search->search) . '%'])
-				->orWhereRaw('LOWER(description) LIKE ?', ['%' . Str::lower($search->search) . '%']);
+			
+			$query->where(function($q) use ($search) {
+				$q->whereRaw('LOWER(permissions.name) LIKE ?', ['%' . Str::lower($search->search) . '%'])
+				  ->orWhereRaw('LOWER(permissions.key) LIKE ?', ['%' . Str::lower($search->search) . '%']);
+			});
 		}
 
-		return $query->count();
+		if($countPermissionDto->is_active !== null) {
+			$query->where('permissions.is_active', $countPermissionDto->is_active);
+		}
+
+		$query->leftJoin('role_permission as rp', 'rp.permission_id', '=', 'permissions.id')
+			  ->leftJoin('roles as r', 'r.id', '=', 'rp.role_id');
+
+		if(count($countPermissionDto->roles_ids) > 0) {
+			$query->whereIn('r.id', $countPermissionDto->roles_ids);
+		}
+
+		return $query->distinct('permissions.id')->count('permissions.id');
+
 	}	
 
 	public function findById(string $id) : PermissionEntity | null {

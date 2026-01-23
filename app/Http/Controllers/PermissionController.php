@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Application\Common\Dtos\PaginationDto;
 use App\Application\Common\Dtos\SearchDto;
+use App\Application\Permission\DTOs\CountPermissionDto;
 use App\Application\Permission\DTOs\CreatePermissionDto;
 use App\Application\Permission\UseCases\CountPermission;
 use App\Application\Permission\UseCases\CreatePermission;
@@ -43,8 +44,9 @@ class PermissionController extends Controller {
 
 	public function count(CountPermissionRequest $request, CountPermission $useCase) {
 		$dtoSearch = new SearchDto($request->input('search'));
+		$countPermissionDto = $request->toCountPermissionDto();
 
-		$count = $useCase->handle($dtoSearch);
+		$count = $useCase->handle($dtoSearch, $countPermissionDto);
 
 		return response()->json([
 			'message' => 'Permissions count retrieved successfully',
