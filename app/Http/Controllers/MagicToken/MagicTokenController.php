@@ -2,9 +2,9 @@
 namespace App\Http\Controllers\MagicToken;
 
 use App\Application\MagicToken\Services\Contracts\MagicLinkSeenderInterface;
-use App\Http\Controllers\Controller;
 use App\Http\Request\MagicToken\GenerateNewTokenRequest;
 use App\Http\Request\MagicToken\ValidateUserRequest;
+use Illuminate\Routing\Controller;
 
 class MagicTokenController extends Controller  {
 	protected $magicLinkService;

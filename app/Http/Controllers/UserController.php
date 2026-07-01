@@ -12,7 +12,6 @@ use App\Application\User\UseCases\LogoutUser;
 use App\Application\User\UseCases\RefreshToken;
 use App\Application\User\UseCases\ToggleEnableUser;
 use App\Application\User\UseCases\UpdateUser;
-use App\Http\Controllers\Controller;
 use App\Http\Request\Common\GetWithPaginationAndSearchRequest;
 use App\Http\Request\User\CreateUserRequest;
 use App\Http\Request\User\GetUsersFilters;
@@ -20,6 +19,7 @@ use App\Http\Request\User\LoginRequest;
 use App\Http\Request\User\ToggleEnableUserRequest;
 use App\Http\Request\User\UpdateUserRequest;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class UserController extends Controller {
 	/**
