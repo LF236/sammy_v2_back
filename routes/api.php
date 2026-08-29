@@ -59,5 +59,6 @@ Route::prefix('catalogs')->group(function() {
 	Route::get('/person_types', [PersonTypeController::class, 'get']);
 	Route::post('/person_types', [PersonTypeController::class, 'store']);
 	Route::get('/person_types/{id}', [PersonTypeController::class, 'getOne']);
-	Route::put('person_types/{id}', [PersonTypeController::class, 'update']);
+	Route::put('/person_types/{id}', [PersonTypeController::class, 'update']);
+	Route::get('/person_types/count/total', [PersonTypeController::class, 'count']);
 });

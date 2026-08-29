@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Application\PersonType\UseCases\CountPersonTypeUseCase;
 use App\Application\PersonType\UseCases\CreatePersonTypeUseCase;
 use App\Application\PersonType\UseCases\GetOnePersonTypeUseCase;
 use App\Application\PersonType\UseCases\GetPersonTypeUseCase;
@@ -23,17 +24,25 @@ class PersonTypeController extends Controller {
     $getPersonTypeDto = $request->toGetPersonTypeDto();
 
     $data = $useCase->handle($paginationDto, $searchDto, $getPersonTypeDto);
-    return response()->json($data, 201);
+    return response()->json($data, 200);
+  }
+
+  public function count(GetPersonTypeRequest $request, CountPersonTypeUseCase $useCase) {
+    $searchDto = $request->toSearchDto();
+    $dto = $request->toGetPersonTypeDto();
+
+    $count = $useCase->handle($searchDto, $dto);
+    return response()->json($count, 200);
   }
 
   public function getOne(string $id, GetOnePersonTypeUseCase $useCase) {
     $item = $useCase->handle($id);
-    return response()->json($item, 201);
+    return response()->json($item, 200);
   }
 
   public function update(string $id, UpdatePersonTypeRequest $request, UpdatePersonTypeUseCase $useCase) {
     $dto = $request->toDto();
     $newPersonType = $useCase->handle($id, $dto);
-    return response()->json($newPersonType, 201);
+    return response()->json($newPersonType, 200);
   }
 }

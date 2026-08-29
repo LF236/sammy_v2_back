@@ -14,4 +14,5 @@ interface PersonTypeRepository {
   public function existsByCode(String $code) : bool;
   public function get(PaginationDto $paginationDto, SearchDto $searchDto, GetPersonTypeDto $dto) : array;
   public function update(string $id, UpdatePersonTypeDto $dto) : PersonTypeEntity;
+  public function count(SearchDto $searchDto, GetPersonTypeDto $dto);
 }

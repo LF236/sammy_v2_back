@@ -72,6 +72,22 @@ class EloquentPersonTypeRepository implements PersonTypeRepository {
     })->toArray();
   }
 
+  public function count(SearchDto $searchDto, GetPersonTypeDto $dto) {
+    $query = DB::table('person_types');
+    if($searchDto->search) {
+      $query->where(function($q) use ($searchDto) {
+        $q->whereRaw('LOWER(person_types.name) LIKE ?', ['%' . Str::lower($searchDto->search) . '%'])
+          ->orWhereRaw('LOWER(person_types.code) LIKE ?', ['%' . Str::lower($searchDto->search . '%')]);
+      });
+    }
+    
+    if($dto->is_active !== null) {
+      $query->where('person_types.is_active', $dto->is_active);
+    }
+
+    return $query->count();
+  }  
+
   public function update(string $id, UpdatePersonTypeDto $dto): PersonTypeEntity {
     $item = EloquentPersonType::find($id);
     if($dto->name !== null) {
