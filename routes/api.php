@@ -3,6 +3,7 @@
 use App\Http\Controllers\MagicToken\MagicTokenController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PersonTypeController;
 use App\Http\Controllers\RolsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -52,4 +53,12 @@ Route::prefix('user')->middleware('auth:sanctum')->group(function() {
 Route::prefix('person')->middleware('auth:sanctum')->group(function() {
 	Route::post('/', [PersonController::class, 'store']);
 	Route::put('/', [PersonController::class, 'update']);
+});
+
+Route::prefix('catalogs')->group(function() {
+	Route::get('/person_types', [PersonTypeController::class, 'get']);
+	Route::post('/person_types', [PersonTypeController::class, 'store']);
+	Route::get('/person_types/{id}', [PersonTypeController::class, 'getOne']);
+	Route::put('/person_types/{id}', [PersonTypeController::class, 'update']);
+	Route::get('/person_types/count/total', [PersonTypeController::class, 'count']);
 });
