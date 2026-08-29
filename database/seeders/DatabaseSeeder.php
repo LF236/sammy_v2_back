@@ -1,9 +1,6 @@
 <?php
 
 namespace Database\Seeders;
-
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,7 +13,8 @@ class DatabaseSeeder extends Seeder
 		$this->call([
 			AddRoles::class,
 			AddPermission::class,
-			RelationRolesPermissions::class
+			RelationRolesPermissions::class,
+      AddPersonTypesDefaultSeed::class
 		]);
     }
 }

@@ -12,6 +12,7 @@ use App\Domain\Auth\AuthUserProviderInterface;
 use App\Domain\MagicToken\Repositories\MagicTokenRepositoryInterface;
 use App\Domain\Permission\Repositories\PermissionRepository;
 use App\Domain\Person\Repesitories\PersonRepository;
+use App\Domain\PersonType\Repositories\PersonTypeRepository;
 use App\Domain\Rols\Repositories\RolsRepository;
 use App\Domain\RolsPermission\Repositories\RolsPermissionRepository;
 use App\Domain\UserRole\Repositories\UserRoleRepository;
@@ -19,6 +20,7 @@ use App\Infraestructure\Laravel\Auth\LaravelAuthUserProvider;
 use App\Infraestructure\Persistence\MagicToken\EloquentMaginTokenRepository;
 use App\Infraestructure\Persistence\Permission\EloquentPermissionRepository;
 use App\Infraestructure\Persistence\Person\EloquentPersonRepository;
+use App\Infraestructure\Persistence\PersonType\EloquentPersonTypeRepository;
 use App\Infraestructure\Persistence\Role\EloquentRoleRepository;
 use App\Infraestructure\Persistence\RolsPermission\EloquentRolPermissionRepository;
 use App\Infraestructure\Persistence\UserRole\EloquentUserRoleRepository;
@@ -27,19 +29,19 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        //
-    }
+	/**
+	 * Register any application services.
+	 */
+	public function register(): void
+	{
+		//
+	}
 
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
+	/**
+	 * Bootstrap any application services.
+	 */
+	public function boot(): void
+	{
 		//
 		$this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
 		$this->app->bind(MagicLinkSeenderInterface::class, MagicLinkService::class);
@@ -65,5 +67,8 @@ class AppServiceProvider extends ServiceProvider
 
 		// AuthUserProvider
 		$this->app->bind(AuthUserProviderInterface::class, LaravelAuthUserProvider::class);
-    }
+
+		// PersonType
+		$this->app->bind(PersonTypeRepository::class, EloquentPersonTypeRepository::class);
+	}
 }
